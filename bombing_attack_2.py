@@ -74,6 +74,6 @@ def init_association(src_port, dst_port):
     sniffer.start()
 
 
-for x in range(number_of_associations):
+for x in range(number_of_associations - 1):
     init_association(src_port + x, dst_port)
 input("Press any key to exit.")

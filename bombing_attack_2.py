@@ -66,7 +66,7 @@ def init_association(src_port, dst_port):
 
     sendp(cookie_echo_pkt, iface=network_interface)
     sniffer = AsyncSniffer(
-        iface="ens160",
+        iface=network_interface,
         prn=lambda pkt: rcv_pkt_callback(sniffer, pkt, cookie_echo_pkt),
         filter=f"src host {dst_address} and dst port {src_port}",
         store=0,

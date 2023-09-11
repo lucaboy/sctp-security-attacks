@@ -3,10 +3,11 @@ from scapy.layers.inet import Ether, IP, Packet
 from scapy.layers.sctp import (
     SCTP,
     SCTPChunkInit,
+    SCTPChunkInitAck,
     SCTPChunkCookieEcho,
     SCTPChunkParamIPv4Addr,
     SCTPChunkParamCookiePreservative,
-    SCTPChunkParamStateCookie,
+    SCTPChunkParamStateCookie
 )
 from random import randint
 
@@ -22,13 +23,16 @@ eth_ip = Ether() / IP(src=src_address, dst=dst_address)
 
 
 def rcv_pkt_callback(sniffer: AsyncSniffer, pkt: Packet, cookie_echo_pkt: Packet):
-    sctp_pkt = pkt.lastlayer()
-    if sctp_pkt.fields.get("type") == 6:
+    sctp_pkt = pkt.getlayer(SCTP)
+    if sctp_pkt is None:
+        return
+    chunk = sctp_pkt.getlayer(1)
+    if chunk.fields.get("type") == 6:
         sendp(cookie_echo_pkt, iface=network_interface)
-    elif sctp_pkt.fields.get("type") == 9:
-        sniffer.stop()
-        src_port = pkt.getlayer(SCTP).fields.get("sport")
-        dst_port = pkt.getlayer(SCTP).fields.get("dport")
+    elif chunk.fields.get("type") == 9:
+        sniffer.stop(False)
+        src_port = sctp_pkt.fields.get("sport")
+        dst_port = sctp_pkt.fields.get("dport")
         init_association(src_port, dst_port)
 
 
@@ -55,7 +59,9 @@ def init_association(src_port, dst_port):
     init_pkt = eth_ip / sctp / init_chunk
 
     init_ack_pkt = srp1(init_pkt, iface=network_interface)
-    init_ack_chunk = init_ack_pkt.lastlayer()
+    init_ack_chunk = init_ack_pkt.getlayer(SCTPChunkInitAck)
+    if init_ack_chunk is None: 
+        return
     init_ack_chunk_params = init_ack_chunk.fields.get("params")
 
     verification_tag = init_ack_chunk.fields.get("init_tag")

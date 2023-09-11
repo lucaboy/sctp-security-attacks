@@ -47,12 +47,12 @@ def create_init_chunk() -> SCTPChunkInit:
     )
 
 
-chunk_init = create_init_chunk()
+init_chunk = create_init_chunk()
 
 
 def init_association(src_port, dst_port):
     sctp = SCTP(sport=src_port, dport=dst_port, tag=0x0)
-    init_pkt = eth_ip / sctp / chunk_init
+    init_pkt = eth_ip / sctp / init_chunk
 
     init_ack_pkt = srp1(init_pkt, iface=network_interface)
     init_ack_chunk = init_ack_pkt.lastlayer()

